@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Sudda VIP Signal</title>
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#0d1117;
+    color:white;
+}
+.center{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+.box{
+    width:400px;
+    background:#161b22;
+    padding:20px;
+    border-radius:20px;
+    box-shadow:0 0 30px black;
+}
+.title{
+    text-align:center;
+    font-size:22px;
+    color:#ff4d00;
+    font-weight:bold;
+    margin-bottom:15px;
+}
+input{
+    width:100%;
+    padding:10px;
+    margin-bottom:10px;
+    border-radius:8px;
+    border:none;
+}
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    font-weight:bold;
+    background:linear-gradient(90deg,#ff4d00,#ff0000);
+    color:white;
+    cursor:pointer;
+}
+.result, .history{
+    margin-top:10px;
+    background:#1f2937;
+    padding:10px;
+    border-radius:10px;
+}
+.countdown{
+    text-align:center;
+    font-size:18px;
+    margin-top:10px;
+}
+.green{color:#00ff88;}
+.red{color:#ff4444;}
+.prob{
+    margin-top:10px;
+    height:20px;
+    background:#333;
+    border-radius:10px;
+    overflow:hidden;
+}
+.bar{
+    height:100%;
+    background:#00ff88;
+    width:0%;
+}
+</style>
+</head>
+<body>
+
+<div id="loginPage" class="center">
+<div class="box">
+<div class="title">Sudda VIP Signal - Login</div>
+<input type="password" id="vipPass" placeholder="Enter VIP Password">
+<button onclick="login()">Login</button>
+<div id="loginMsg"></div>
+</div>
+</div>
+
+<div id="appPage" style="display:none" class="center">
+<div class="box">
+<div class="title">Sudda VIP Signal</div>
+
+<input type="time" id="time1">
+<input type="number" id="odd1" placeholder="High 1 Odd">
+
+<input type="time" id="time2">
+<input type="number" id="odd2" placeholder="High 2 Odd">
+
+<button onclick="generate()">Analyze</button>
+
+<div class="result" id="result">Waiting...</div>
+<div class="countdown" id="countdown"></div>
+
+<div class="prob"><div class="bar" id="bar"></div></div>
+
+<div class="history" id="history"><b>History:</b><br></div>
+</div>
+</div>
+
+<audio id="alertSound">
+<source src="https://www.soundjay.com/buttons/sounds/button-3.mp3">
+</audio>
+
+<script>
+const VIP_PASSWORD = "jethuka075";
+let historyList = [];
+let timer = null;
+
+function login(){
+    let pass = document.getElementById("vipPass").value;
+    if(pass === VIP_PASSWORD){
+        document.getElementById("loginPage").style.display="none";
+        document.getElementById("appPage").style.display="flex";
+    }else{
+        document.getElementById("loginMsg").innerHTML="<span class='red'>Wrong Password</span>";
+    }
+}
+
+function generate(){
+    clearInterval(timer);
+
+    let t1 = document.getElementById("time1").value;
+    let t2 = document.getElementById("time2").value;
+    let o1 = parseFloat(document.getElementById("odd1").value);
+    let o2 = parseFloat(document.getElementById("odd2").value);
+
+    if(!t1 || !t2 || isNaN(o1) || isNaN(o2)){
+        document.getElementById("result").innerHTML="Enter all data";
+        return;
+    }
+
+    function toSec(t){
+        let p=t.split(":");
+        return parseInt(p[0])*3600 + parseInt(p[1])*60;
+    }
+
+    let s1=toSec(t1);
+    let s2=toSec(t2);
+    let gap=s2-s1;
+    if(gap<=0) gap=120+Math.random()*60;
+
+    let nextTime=s2+gap+Math.floor(Math.random()*20);
+
+    let h=Math.floor(nextTime/3600)%24;
+    let m=Math.floor((nextTime%3600)/60);
+    let s=Math.floor(nextTime%60);
+
+    let timeStr=String(h).padStart(2,'0')+":"+
+                String(m).padStart(2,'0')+":"+
+                String(s).padStart(2,'0');
+
+    let avg=(o1+o2)/2;
+    let nextOdd=(avg+Math.random()*10).toFixed(2);
+
+    let probability=Math.floor(75+Math.random()*20);
+
+    document.getElementById("result").innerHTML=
+        "Next High Time: <span class='green'>"+timeStr+"</span><br>"+
+        "Next High Odd: <span class='green'>"+nextOdd+"x</span><br>"+
+        "Probability: "+probability+"%";
+
+    document.getElementById("bar").style.width=probability+"%";
+
+    historyList.push("Time: "+timeStr+" | Odd: "+nextOdd+"x");
+    if(historyList.length>50) historyList.shift();
+    updateHistory();
+
+    let remain=nextTime-s2;
+    timer=setInterval(function(){
+        let min=Math.floor(remain/60);
+        let sec=remain%60;
+        document.getElementById("countdown").innerHTML=
+            "Countdown: "+String(min).padStart(2,'0')+":"+
+            String(sec).padStart(2,'0');
+        remain--;
+        if(remain<0){
+            clearInterval(timer);
+            document.getElementById("countdown").innerHTML=
+                "<span class='green'>⚡ HIGH TIME WINDOW</span>";
+            document.getElementById("alertSound").play();
+        }
+    },1000);
+}
+
+function updateHistory(){
+    let html="<b>History:</b><br>";
+    for(let i=historyList.length-1;i>=0;i--){
+        html+=historyList[i]+"<br>";
+    }
+    document.getElementById("history").innerHTML=html;
+}
+</script>
+
+</body>
+  </html>
